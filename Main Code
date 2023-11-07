@@ -1,0 +1,542 @@
+!pip install lazypredict
+!pip install scikit-learn
+import sklearn
+import lazypredict
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
+from lazypredict.Supervised import LazyClassifier
+from lazypredict.Supervised import LazyRegressor
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import Lars
+from lightgbm import LGBMRegressor
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.preprocessing import LabelEncoder
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_curve, auc
+from sklearn.ensemble import GradientBoostingClassifier
+import matplotlib.pyplot as plt
+from matplotlib.legend_handler import HandlerLine2D
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+
+careers = pd.read_csv('PlayerCareers.csv')
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+updatedcareers = pd.read_csv("UpdatedPlayerCareers.csv")
+
+twentyfour = pd.read_csv('2024qbs.csv')
+
+twentythree = pd.read_csv('2023qbs.csv')
+
+twentytwo = pd.read_csv('2022qbs.csv')
+
+twentyone = pd.read_csv('2021qbs.csv')
+
+twenty = pd.read_csv('2020qbs.csv')
+
+nineteen = pd.read_csv('2019qbs.csv')
+
+eighteen = pd.read_csv('2018qbs.csv')
+
+seventeen = pd.read_csv('2017qbs.csv')
+
+sixteen = pd.read_csv('2016qbs.csv')
+
+fifteen = pd.read_csv('2015qbs.csv')
+
+qbs_list_24 = ["Caleb Williams", "Drake Maye", "Michael Penix Jr.", "Shedeur Sanders", "Bo Nix", "J.J. McCarthy", "Quinn Ewers", "Phil Jurkovec", "Jayden Daniels", "Michael Pratt", "Riley Leonard", "Spencer Rattler"]
+qbs2024 = twentyfour[twentyfour.player.isin(qbs_list_24)]
+
+qbs_list_23 = ["Bryce Young", "C.J. Stroud", "Anthony Richardson", "Will Levis", "Hendon Hooker"]
+qbs2023 = twentythree[twentythree.player.isin(qbs_list_23)]
+
+qbs_list_22 = ["Kenny Pickett", "Malik Willis", "Desmond Ridder", "Bailey Zappe", "Sam Howell", "Skylar Thompson", "Brock Purdy"]
+qbs2022 = twentytwo[twentytwo.player.isin(qbs_list_22)]
+
+qbs_list_21 = ["Trevor Lawrence", "Zach Wilson", "Trey Lance", "Justin Fields", "Mac Jones", "Davis Mills"]
+qbs2021 = twentyone[twentyone.player.isin(qbs_list_21)]
+
+qbs_list_20 = ["Joe Burrow", "Tua Tagovailoa", "Justin Herbert", "Jalen Hurts", "Tyler Huntley"]
+qbs2020 = twenty[twenty.player.isin(qbs_list_20)]
+
+qbs_list_19 = ["Kyler Murray", "Daniel Jones", "Dwayne Haskins", "Drew Lock", "Will Grier", "Gardner Minshew", "David Blough"]
+qbs2019 = nineteen[nineteen.player.isin(qbs_list_19)]
+
+qbs_list18 = ["Baker Mayfield", "Sam Darnold", "Josh Allen", "Josh Rosen", "Lamar Jackson", "Mason Rudolph", "Mike White"]
+qbs2018 = eighteen[eighteen.player.isin(qbs_list18)]
+
+qbs_list_17 = ["Mitch Trubisky", "Patrick Mahomes", "Deshaun Watson", "DeShone Kizer", "Davis Webb", "C.J. Beathard", "Nathan Peterman", "Cooper Rush", "Nick Mullens", "P.J. Walker"]
+qbs2017 = seventeen[seventeen.player.isin(qbs_list_17)]
+
+qbs_list_16 = ["Jared Goff", "Carson Wentz", "Paxton Lynch", "Jacoby Brissett", "Cody Kessler", "Dak Prescott", "Brandon Allen", "Jeff Driskel", "Kyle Allen"]
+qbs2016 = sixteen[sixteen.player.isin(qbs_list_16)]
+
+qbs_list_15 = ["Jameis Winston", "Marcus Mariota", "Sean Mannion", "Brett Hundley", "Trevor Siemian", "Taylor Heinicke"]
+qbs2015 = fifteen[fifteen.player.isin(qbs_list_15)]
+
+all_qbs = pd.concat([qbs2020, qbs2019, qbs2018, qbs2017, qbs2016, qbs2015])
+#print(all_qbs)
+
+desired_order = [
+    "Joe Burrow", "Tua Tagovailoa", "Justin Herbert", "Jalen Hurts", "Tyler Huntley",
+    "Kyler Murray", "Daniel Jones", "Dwayne Haskins", "Drew Lock", "Will Grier", "Gardner Minshew",
+    "David Blough", "Baker Mayfield", "Sam Darnold", "Josh Allen", "Josh Rosen",
+    "Lamar Jackson", "Mason Rudolph", "Mike White", "Kyle Allen", "Mitch Trubisky", "Patrick Mahomes",
+    "Deshaun Watson", "DeShone Kizer", "Davis Webb", "C.J. Beathard", "Nathan Peterman", "Cooper Rush",
+    "P.J. Walker", "Nick Mullens", "Jared Goff", "Carson Wentz", "Paxton Lynch", "Jacoby Brissett",
+    "Cody Kessler", "Dak Prescott", "Brandon Allen", "Jeff Driskel", "Jameis Winston", "Marcus Mariota",
+    "Sean Mannion", "Brett Hundley", "Trevor Siemian", "Taylor Heinicke"
+]
+
+# Reorder the DataFrame based on the desired order
+all_qbs = all_qbs.set_index('player').reindex(desired_order).reset_index()
+
+totaldata = pd.concat([all_qbs, careers], axis=1)
+
+df = pd.DataFrame(totaldata)
+
+df.drop(['player_id', 'position', 'team_name'], axis = 1)
+
+df["Playoff Wins Metric"] = df["Playoff Wins"] / 35
+df["Playoff Wins Metric"].replace([np.inf, -np.inf, np.nan], 0, inplace=True)
+
+
+
+df["Success"] = 0.3 * df["Win Percentage"] + 0.2 * df["Passer Rating %"] + 0.45 * df["Playoff Wins Metric"] + 0.05 * df["Longevity"]
+
+print(df)
+
+df["pressures per snap"] = df["def_gen_pressures"] / df["dropbacks"]
+df["grades_hands_fumble"] = df["grades_hands_fumble"] / 100.000
+df["accuracy_percent"] = df["accuracy_percent"] / 100.000
+df["avg_depth_of_target"] = df["avg_depth_of_target"] / 100.000
+df["avg_time_to_throw"] = df["avg_time_to_throw"] / 100.000
+df["bats"] = df["bats"] / 100.000
+df["btt_rate"] = df["btt_rate"] / 100.00
+df["completion_percent"] = df["completion_percent"] / 100.00
+df["drop_rate"] = df["drop_rate"] / 100.00
+df["grades_offense"] = df["grades_offense"] / 100.00
+df["grades_pass"] = df["grades_pass"] / 100.00
+df["grades_run"] = df["grades_run"] / 100.00
+df["interceptions_rate"] = df["interceptions"] / df["attempts"]
+df["pressure_to_sack_rate"] = df["pressure_to_sack_rate"] / 100.00
+df["qb_rating"] = df["qb_rating"] / 158.3
+df["sack_percent"] = df["sack_percent"] / 100.00
+df["scramble_rate"] = df["scrambles"] / df["dropbacks"]
+df["thrown_away_percentage"] = df["thrown_aways"] / df["attempts"]
+df["sack_percent"] = df["sack_percent"] / 100.00
+df["touchdowns_per_game"] = df["touchdowns"] / (10 * df["player_game_count"])
+df["twp_rate"] = df["twp_rate"] / 100.00
+df["ypaa"] = df["yards"] / df["attempts"]
+df["aimed_passes"] = df["aimed_passes"] / 100.00
+
+df = df.fillna(0)
+#print(df)
+
+#print(y_test)# Assuming totaldata is your DataFrame
+# Define features (X) and target (y)
+#X = df[["player_game_count", "aimed_passes", "yards", "attempts", "accuracy_percent", "avg_depth_of_target", "avg_time_to_throw", "bats", "big_time_throws", "btt_rate", "completion_percent", "completions", "declined_penalties", "def_gen_pressures", "drop_rate", "dropbacks", "drops", "first_downs", "franchise_id", "grades_hands_fumble", "grades_offense", "grades_pass", "grades_run", "hit_as_threw", "interceptions", "passing_snaps", "penalties", "pressure_to_sack_rate", "qb_rating", "sack_percent", "sacks", "scrambles", "spikes", "thrown_aways", "touchdowns", "turnover_worthy_plays", "twp_rate", "ypa"]]
+X = df[["accuracy_percent", "aimed_passes", "ypaa", "avg_depth_of_target", "avg_time_to_throw", "bats", "btt_rate", "completion_percent", "pressures per snap", "drop_rate", "grades_hands_fumble", "grades_offense", "grades_pass", "grades_run", "interceptions_rate", "pressure_to_sack_rate", "qb_rating", "sack_percent", "scramble_rate", "thrown_away_percentage", "touchdowns_per_game", "twp_rate"]]
+
+y = df[["Success"]]
+#print(df)
+
+
+# Perform a 70-30 train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0, shuffle = True)
+#print(X_train)
+#print(X_test)
+#print(y_train)
+
+lazyf = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
+models,predictions = lazyf.fit(X_train, X_test, y_train, y_test)
+models
+
+clf = BayesianRidge(compute_score=True)
+clf.fit(X_train, y_train)
+
+# Getting predictions from the classifier
+predictions = clf.predict(X_test)
+rounded_predictions = [round(prediction, 2) for prediction in predictions]
+
+# Printing headers
+print("QB Name\t        Pred\tActual")
+
+qb_names = ["Jared Goff", "Jeff Driskel", "Cooper Rush", "Tyler Huntley", "Gardner Minshew", "C.J. Beathard", "P.J. Walker", "David Blough", "Jameis Winston"]
+
+
+# Printing three columns: QB Names, Predicted Success, Actual Success
+for qb_name, rounded_prediction in zip(qb_names, rounded_predictions):
+    qb_data = df[df['player'] == qb_name]
+    success_values = qb_data['Success'].tolist()
+    truncated_values = [round(value, 2) for value in success_values]
+    actual_success = truncated_values[0] if truncated_values else None  # Assuming there's only one value per QB
+    print(f"{qb_name}\t{rounded_prediction}\t{actual_success}")
+
+rf = RandomForestRegressor(n_estimators = 1000, random_state = 12, min_samples_split = 10, bootstrap = True)
+rf.fit(X_train, y_train)
+rf_predictions = rf.predict(X_test)
+rounded_rf_predictions = [round(prediction, 2) for prediction in rf_predictions]
+
+# Printing headers
+print("QB Name\t        Pred\tActual")
+
+# Printing three columns: QB Names, Random Forest Predicted Success, Actual Success
+for qb_name, rounded_rf_prediction in zip(qb_names, rounded_rf_predictions):
+    qb_data = df[df['player'] == qb_name]
+    success_values = qb_data['Success'].tolist()
+    truncated_values = [round(value, 2) for value in success_values]
+    actual_success = truncated_values[0] if truncated_values else None  # Assuming there's only one value per QB
+    print(f"{qb_name}\t{rounded_rf_prediction}\t{actual_success}")
+
+
+
+gbr = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=12)
+
+# Fit the model on the training data
+gbr.fit(X_train, y_train)
+
+# Getting predictions from the Gradient Boosting Regressor
+gbr_predictions = gbr.predict(X_test)
+rounded_gbr_predictions = [round(prediction, 2) for prediction in gbr_predictions]
+
+# Printing headers
+print("QB Name\t        Pred\tActual")
+
+# Printing three columns: QB Names, Gradient Boosting Predicted Success, Actual Success
+for qb_name, rounded_gbr_prediction in zip(qb_names, rounded_gbr_predictions):
+    qb_data = df[df['player'] == qb_name]
+    success_values = qb_data['Success'].tolist()
+    truncated_values = [round(value, 2) for value in success_values]
+    actual_success = truncated_values[0] if truncated_values else None  # Assuming there's only one value per QB
+    print(f"{qb_name}\t{rounded_gbr_prediction}\t{actual_success}")
+
+
+
+
+
+learning_rates = [1, 0.5, 0.25, 0.1, 0.05, 0.01]
+train_results = []
+test_results = []
+
+for eta in learning_rates:
+    model = GradientBoostingRegressor(learning_rate=eta)
+    model.fit(X_train, y_train)
+
+    # Training MSE
+    train_pred = model.predict(X_train)
+    mse_train = mean_squared_error(y_train, train_pred)
+    train_results.append(mse_train)
+
+    # Test MSE
+    y_pred = model.predict(X_test)
+    mse_test = mean_squared_error(y_test, y_pred)
+    test_results.append(mse_test)
+
+line1, = plt.plot(learning_rates, train_results, 'b', label="Train MSE")
+line2, = plt.plot(learning_rates, test_results, 'r', label="Test MSE")
+
+n_estimators = [1, 2, 4, 8, 16, 32, 64, 100, 200]
+train_results = []
+test_results = []
+
+for estimator in n_estimators:
+    model = GradientBoostingRegressor(n_estimators=estimator)
+    model.fit(X_train, y_train)
+
+    # Training MSE
+    train_pred = model.predict(X_train)
+    mse_train = mean_squared_error(y_train, train_pred)
+    train_results.append(mse_train)
+
+    # Test MSE
+    y_pred = model.predict(X_test)
+    mse_test = mean_squared_error(y_test, y_pred)
+    test_results.append(mse_test)
+
+line1, = plt.plot(n_estimators, train_results, 'b', label="Train MSE")
+line2, = plt.plot(n_estimators, test_results, 'r', label="Test MSE")
+
+print(test_results)
+
+max_depths = np.linspace(1, 32, 32, endpoint=True)
+train_results = []
+test_results = []
+
+for max_depth in max_depths:
+    model = GradientBoostingRegressor(max_depth=int(max_depth))
+    model.fit(X_train, y_train)
+
+    # Training MSE
+    train_pred = model.predict(X_train)
+    mse_train = mean_squared_error(y_train, train_pred)
+    train_results.append(mse_train)
+
+    # Test MSE
+    y_pred = model.predict(X_test)
+    mse_test = mean_squared_error(y_test, y_pred)
+    test_results.append(mse_test)
+
+line1, = plt.plot(max_depths, train_results, 'r', label="Train MSE")
+line2, = plt.plot(max_depths, test_results, 'b', label="Test MSE")
+plt.legend(handler_map={line1: HandlerLine2D(numpoints=2)})
+plt.ylabel('Mean Squared Error')
+plt.xlabel('Tree Depth')
+plt.title('Effect of Tree Depth on Mean Squared Error')
+plt.show()
+
+
+
+print(y_test)
+
+print(y_pred)
+
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'max_depth': [3, 5, 7]
+}
+
+# Initialize the model
+model = GradientBoostingRegressor()
+
+# Initialize GridSearchCV
+grid_search = GridSearchCV(estimator=model, param_grid=param_grid, scoring='neg_mean_squared_error', cv=5)
+
+# Fit the model with hyperparameter tuning
+grid_search.fit(X_train, y_train)
+
+# Get the best model
+best_model = grid_search.best_estimator_
+
+# Predict on the test set
+y_pred1 = best_model.predict(X_test)
+
+plt.scatter(y_test, y_pred1, alpha=0.5)
+plt.title('True vs Predicted Values')
+plt.xlabel('True Values')
+plt.ylabel('Predicted Values')
+plt.show()
+
+# Initialize GradientBoostingRegressor with early stopping
+
+
+
+model = GradientBoostingRegressor(
+    n_estimators=50,
+    learning_rate=0.05,
+    max_depth=35,
+    n_iter_no_change=25,
+    tol= 11,
+    random_state=11
+)
+
+
+# Fit the model
+model.fit(X_train, y_train)
+
+# Training MSE
+train_pred = model.predict(X_train)
+train_mse = mean_squared_error(y_train, train_pred)
+
+# Test MSE
+test_pred = model.predict(X_test)
+test_mse = mean_squared_error(y_test, test_pred)
+
+print(f'Training MSE: {train_mse}')
+print(f'Test MSE: {test_mse}')
+
+plt.scatter(y_train, train_pred, alpha=0.5)
+plt.title('Scatter Plot of Predicted vs Actual Values (Training Set)')
+plt.xlabel('Actual Values')
+plt.ylabel('Predicted Values')
+plt.show()
+
+plt.scatter(y_test, test_pred, alpha=0.5)
+plt.title('Scatter Plot of Predicted vs Actual Values (Test Set)')
+plt.xlabel('Actual Values')
+plt.ylabel('Predicted Values')
+plt.show()
+
+
+
+# Convert NumPy arrays to Pandas Series
+train_pred_series = pd.Series(train_pred, name='Predicted', index=y_train.index)
+test_pred_series = pd.Series(test_pred, name='Predicted', index=y_test.index)
+
+# Create DataFrames with actual and predicted values
+train_df = pd.concat([y_train, train_pred_series], axis=1)
+test_df = pd.concat([y_test, test_pred_series], axis=1)
+
+# Print DataFrames
+print("Training Set - Actual and Predicted Values:")
+print(train_df)
+
+print("\nTest Set - Actual and Predicted Values:")
+print(test_df)
+
+all_qbs2 = pd.concat([qbs2021, qbs2022, qbs2023, qbs2024])
+desired_order2 = [
+    "Bryce Young", "C.J. Stroud", "Anthony Richardson", "Will Levis", "Hendon Hooker", "Kenny Pickett", "Malik Willis", "Desmond Ridder", "Bailey Zappe", "Sam Howell", "Skylar Thompson", "Brock Purdy", "Trevor Lawrence", "Zach Wilson", "Trey Lance", "Justin Fields", "Mac Jones", "Davis Mills", "Caleb Williams", "Drake Maye", "Michael Penix Jr.", "Shedeur Sanders", "Bo Nix", "J.J. McCarthy", "Quinn Ewers", "Phil Jurkovec", "Jayden Daniels", "Michael Pratt", "Riley Leonard", "Spencer Rattler"
+]
+
+all_qbs2 = all_qbs2.set_index('player').reindex(desired_order2).reset_index()
+
+totaldata2 = pd.concat([all_qbs2, updatedcareers], axis=1)
+df2 = pd.DataFrame(totaldata2)
+df2.drop(['player_id', 'position', 'team_name'], axis = 1)
+df2.drop([30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49])
+
+df2.dropna(subset=['player_id'], inplace=True)
+
+
+
+
+
+
+
+df2["Playoff Wins Metric"] = df2["Playoff Wins"] / 35
+df2["Playoff Wins Metric"].replace([np.inf, -np.inf, np.nan], 0, inplace=True)
+df2["Success"] = 0.3 * df2["Win Percentage"] + 0.2 * df2["Passer Rating %"] + 0.45 * df2["Playoff Wins Metric"] + 0.05 * df2["Longevity"]
+
+df2["pressures per snap"] = df2["def_gen_pressures"] / df2["dropbacks"]
+df2["grades_hands_fumble"] = df2["grades_hands_fumble"] / 100.000
+df2["accuracy_percent"] = df2["accuracy_percent"] / 100.000
+df2["avg_depth_of_target"] = df2["avg_depth_of_target"] / 100.000
+df2["avg_time_to_throw"] = df2["avg_time_to_throw"] / 100.000
+df2["bats"] = df2["bats"] / 100.000
+df2["btt_rate"] = df2["btt_rate"] / 100.00
+df2["completion_percent"] = df2["completion_percent"] / 100.00
+df2["drop_rate"] = df2["drop_rate"] / 100.00
+df2["grades_offense"] = df2["grades_offense"] / 100.00
+df2["grades_pass"] = df2["grades_pass"] / 100.00
+df2["grades_run"] = df2["grades_run"] / 100.00
+df2["interceptions_rate"] = df2["interceptions"] / df2["attempts"]
+df2["pressure_to_sack_rate"] = df2["pressure_to_sack_rate"] / 100.00
+df2["qb_rating"] = df2["qb_rating"] / 158.3
+df2["sack_percent"] = df2["sack_percent"] / 100.00
+df2["scramble_rate"] = df2["scrambles"] / df2["dropbacks"]
+df2["thrown_away_percentage"] = df2["thrown_aways"] / df2["attempts"]
+df2["sack_percent"] = df2["sack_percent"] / 100.00
+df2["touchdowns_per_game"] = df2["touchdowns"] / (10 * df2["player_game_count"])
+df2["twp_rate"] = df2["twp_rate"] / 100.00
+df2["ypaa"] = df2["yards"] / df2["attempts"]
+df2["aimed_passes"] = df2["aimed_passes"] / 100.00
+
+
+
+selected_columns = ["accuracy_percent", "aimed_passes", "ypaa", "avg_depth_of_target", "avg_time_to_throw", "bats", "btt_rate", "completion_percent", "pressures per snap", "drop_rate", "grades_hands_fumble", "grades_offense", "grades_pass", "grades_run", "interceptions_rate", "pressure_to_sack_rate", "qb_rating", "sack_percent", "scramble_rate", "thrown_away_percentage", "touchdowns_per_game", "twp_rate"]
+
+df_subset = df2[selected_columns]
+
+
+
+prediction = model.predict(df_subset)
+rounded_predictions = [round(pred, 2) for pred in prediction]
+
+array2 = ["Bryce Young", "C.J. Stroud", "Anthony Richardson", "Will Levis", "Hendon Hooker", "Kenny Pickett", "Malik Willis", "Desmond Ridder", "Bailey Zappe", "Sam Howell", "Skylar Thompson", "Brock Purdy", "Trevor Lawrence", "Zach Wilson", "Trey Lance", "Justin Fields", "Mac Jones", "Davis Mills", "Caleb Williams", "Drake Maye", "Michael Penix Jr.", "Shedeur Sanders", "Bo Nix", "J.J. McCarthy", "Quinn Ewers", "Phil Jurkovec", "Jayden Daniels", "Michael Pratt", "Riley Leonard", "Spencer Rattler"]
+
+result = list(zip(array2, rounded_predictions))
+
+# Print headers
+print("QB Name\tPred")
+
+for qb, pred in result:
+    print(f"{qb}\t{pred}")
+
+# If you want to create a DataFrame with these columns
+df_result = pd.DataFrame(result, columns=['QB Name', 'Pred'])
+print(df_result)
+
+gbr.predict(df_subset)
+
+
+
+#print(y_test)# Assuming totaldata is your DataFrame
+# Define features (X) and target (y)
+#X = df[["player_game_count", "aimed_passes", "yards", "attempts", "accuracy_percent", "avg_depth_of_target", "avg_time_to_throw", "bats", "big_time_throws", "btt_rate", "completion_percent", "completions", "declined_penalties", "def_gen_pressures", "drop_rate", "dropbacks", "drops", "first_downs", "franchise_id", "grades_hands_fumble", "grades_offense", "grades_pass", "grades_run", "hit_as_threw", "interceptions", "passing_snaps", "penalties", "pressure_to_sack_rate", "qb_rating", "sack_percent", "sacks", "scrambles", "spikes", "thrown_aways", "touchdowns", "turnover_worthy_plays", "twp_rate", "ypa"]]
+X2 = df[["accuracy_percent", "aimed_passes", "ypaa", "avg_depth_of_target", "avg_time_to_throw", "bats", "btt_rate", "completion_percent", "pressures per snap", "drop_rate", "grades_hands_fumble", "grades_offense", "grades_pass", "grades_run", "interceptions_rate", "pressure_to_sack_rate", "qb_rating", "sack_percent", "scramble_rate", "thrown_away_percentage", "touchdowns_per_game", "twp_rate"]]
+
+y2 = df[["Pro Passer Rating"]]
+#print(df)
+
+
+# Perform a 70-30 train-test split
+X2_train, X2_test, y2_train, y2_test = train_test_split(X2, y2, test_size=0.2, random_state=48, shuffle = True)
+#print(X_train)
+#print(X_test)
+#print(y_train)
+
+lazyf = LazyRegressor(verbose=0,ignore_warnings=False, custom_metric=None)
+models,predictions = lazyf.fit(X2_train, X2_test, y2_train, y2_test)
+models
+
+gbr2 = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=12)
+
+# Fit the model on the training data
+model.fit(X2_train, y2_train)
+
+# Make predictions on the test set
+model.predict(X2_test)
+
+y2_actual = df.loc[X2_test.index, 'Pro Passer Rating']  # Replace 'ActualPasserRatingColumn' with the actual column name
+
+# Make predictions on the test set
+predictions = model.predict(X2_test)
+print(predictions)
+
+selected_indices = X2_test.index
+
+# Use the selected indices to extract player names from df
+selected_player_names = df.loc[selected_indices, 'player'].reset_index(drop=True)
+
+print(selected_player_names)
+
+gbr2 = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=12)
+
+# Fit the model on the training data
+gbr2.fit(X2_train, y2_train)
+
+# Make predictions on the test set
+gbr2.predict(X2_test)
+
+y2_actual = df.loc[X2_test.index, 'Pro Passer Rating']  # Replace 'ActualPasserRatingColumn' with the actual column name
+
+# Make predictions on the test set
+predictions1 = gbr2.predict(X2_test)
+
+# Combine actual and predicted passer ratings into a DataFrame for better comparison
+results_df = pd.DataFrame({'Actual': y2_actual, 'GBR': predictions1, 'New Model': predictions})
+
+# Print the results
+print(results_df)
+
+gbr2.predict(df_subset)
+
+prediction2 = model.predict(df_subset)
+rounded_predictions = [round(pred, 1) for pred in prediction2]
+
+array2 = ["Bryce Young", "C.J. Stroud", "Anthony Richardson", "Will Levis", "Hendon Hooker", "Kenny Pickett", "Malik Willis", "Desmond Ridder", "Bailey Zappe", "Sam Howell", "Skylar Thompson", "Brock Purdy", "Trevor Lawrence", "Zach Wilson", "Trey Lance", "Justin Fields", "Mac Jones", "Davis Mills", "Caleb Williams", "Drake Maye", "Michael Penix Jr.", "Shedeur Sanders", "Bo Nix", "J.J. McCarthy", "Quinn Ewers", "Phil Jurkovec", "Jayden Daniels", "Michael Pratt", "Riley Leonard", "Spencer Rattler"]
+
+result = list(zip(array2, rounded_predictions))
+
+# Print headers
+print("QB Name\tPred")
+
+for qb, pred in result:
+    print(f"{qb}\t{pred}")
+
+# If you want to create a DataFrame with these columns
+df_result = pd.DataFrame(result, columns=['QB Name', 'Pred'])
+print(df_result)
